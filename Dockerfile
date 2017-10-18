@@ -1,5 +1,4 @@
 FROM richarvey/nginx-php-fpm:1.2.2
-MAINTAINER Women's Tennis Association <admin@wtanetworks.com>
 
 # Install the PHP extensions we need
 RUN apk upgrade --update && \
