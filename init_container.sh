@@ -1,37 +1,31 @@
 #!/bin/bash
-log(){
-	while read line ; do
-		echo "`date '+%D %T'` $line"
-	done
-}
 
 set -e
-logfile=/home/LogFiles/entrypoint.log
-test ! -f $logfile && mkdir -p /home/LogFiles && touch $logfile
-exec > >(log | tee -ai $logfile)
-exec 2>&1
 
-set -x
-nginx_conf=/etc/nginx/sites-enabled/default.conf
+php -v
 
-# set nginx rewrite to resolve 404 error
-sed -i '$d' $nginx_conf
-sed -i 's|$uri/ =404|$uri/ @rewrite|g' $nginx_conf
-echo $'location @rewrite {\n rewrite ^/(.*)$ /index.php?q=$1;\n }\n}' >> $nginx_conf
+# setup nginx log dir
+# http://nginx.org/en/docs/ngx_core_module.html#error_log
+sed -i "s|error_log /var/log/nginx/error.log;|error_log stderr;|g" /etc/nginx/nginx.conf
 
-# set fastcgi_read_timeout to resolve 504 gateway time out
-sed -i '/include fastcgi_params;/a\fastcgi_read_timeout 300;' $nginx_conf
+# setup server root
+mkdir -p "$HOME_SITE"
+chown -R www-data:www-data "$HOME_SITE/"
 
-if [ ! -d "/home/site/wwwroot/docroot" ]; then
-  mkdir -p /home/site/wwwroot/docroot
-fi
-drush @none dl registry_rebuild-7.x
+#echo "INFO: creating /run/php/php7.0-fpm.sock ..."
+#rm -f /run/php/php7.0-fpm.sock
+#touch /run/php/php7.0-fpm.sock
+#chown www-data:www-data /run/php/php7.0-fpm.sock
+#chmod 664 /run/php/php7.0-fpm.sock
 
-if [ ! -z "$PORT" ];then
-	sed -i -e "s/listen   80/listen   ${PORT}/" $nginx_conf
-fi
 
-ssh-keygen -A
-/usr/sbin/sshd
+echo "Starting SSH ..."
+service ssh start
 
-/start.sh
+echo "Starting php-fpm ..."
+service php7.0-fpm start
+
+echo "Starting Nginx ..."
+/usr/sbin/nginx
+
+
