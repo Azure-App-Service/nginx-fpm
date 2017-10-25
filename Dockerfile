@@ -54,6 +54,9 @@ RUN set -ex \
                 php7.0-fpm \
                 php-pear \
                 php7.0-apcu \
+                php7.0-gd \
+                php7.0-dba \
+                php7.0-mysql \
 	" \
         && apt-get update \
 	&& apt-get install -y -V --no-install-recommends $phps \
