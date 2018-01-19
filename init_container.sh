@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+# set -e
 
 php -v
 setup_mariadb_data_dir(){
@@ -31,10 +31,19 @@ start_mariadb(){
     # create default database 'azurelocaldb'
     mysql -u root -e "CREATE DATABASE IF NOT EXISTS azurelocaldb; FLUSH PRIVILEGES;"
 }
-
-# setup nginx log dir
-# http://nginx.org/en/docs/ngx_core_module.html#error_log
-sed -i "s|error_log /var/log/nginx/error.log;|error_log stderr;|g" /etc/nginx/nginx.conf
+#unzip phpmyadmin
+setup_phpmyadmin(){
+    test ! -d "$PHPMYADMIN_HOME" && echo "INFO: $PHPMYADMIN_HOME not found. creating..." && mkdir -p "$PHPMYADMIN_HOME"
+    cd $PHPMYADMIN_SOURCE
+    tar -xf phpMyAdmin.tar.gz -C $PHPMYADMIN_HOME --strip-components=1
+    cp -R phpMyAdmin-config.inc.php $PHPMYADMIN_HOME/config.inc.php
+	cd /
+    rm -rf $PHPMYADMIN_SOURCE
+	if [ ! $WEBSITES_ENABLE_APP_SERVICE_STORAGE ]; then
+        echo "INFO: NOT in Azure, chown for "$HOME_SITE  
+        chown -R www-data:www-data $PHPMYADMIN_HOME
+	fi
+}
 
 # setup server root
 test ! -d "$HOME_SITE" && echo "INFO: $HOME_SITE not found. creating..." && mkdir -p "$HOME_SITE"
@@ -43,6 +52,10 @@ if [ ! $WEBSITES_ENABLE_APP_SERVICE_STORAGE ]; then
     chown -R www-data:www-data $HOME_SITE 
 fi 
 
+# setup nginx log dir
+# http://nginx.org/en/docs/ngx_core_module.html#error_log
+# sed -i "s|error_log /var/log/error.log;|error_log stderr;|g" /etc/nginx/nginx.conf
+
 echo "INFO: creating /run/php/php7.0-fpm.sock ..."
 test -e /run/php/php7.0-fpm.sock && rm -f /run/php/php7.0-fpm.sock
 mkdir -p /run/php
@@ -50,11 +63,10 @@ touch /run/php/php7.0-fpm.sock
 chown www-data:www-data /run/php/php7.0-fpm.sock
 chmod 777 /run/php/php7.0-fpm.sock
 
-#DATABASE_TYPE=$(echo ${DATABASE_TYPE}|tr '[A-Z]' '[a-z]')
-
-
-echo "Starting MariaDB and PHPMYADMIN..."
-echo 'mysql.default_socket = /run/mysqld/mysqld.sock' >> $PHP_CONF_FILE     
+DATABASE_TYPE=$(echo ${DATABASE_TYPE}|tr '[A-Z]' '[a-z]')
+if [ "${DATABASE_TYPE}" == "local" ]; then  
+    echo "Starting MariaDB and PHPMYADMIN..."
+    echo 'mysql.default_socket = /run/mysqld/mysqld.sock' >> $PHP_CONF_FILE     
     echo 'mysqli.default_socket = /run/mysqld/mysqld.sock' >> $PHP_CONF_FILE     
     #setup MariaDB
     echo "INFO: loading local MariaDB and phpMyAdmin ..."
@@ -77,21 +89,19 @@ echo 'mysql.default_socket = /run/mysqld/mysqld.sock' >> $PHP_CONF_FILE
     mysql -u root -e "GRANT ALL ON *.* TO \`$DATABASE_USERNAME\`@'localhost' IDENTIFIED BY '$DATABASE_PASSWORD' WITH GRANT OPTION; FLUSH PRIVILEGES;"
     echo "Installing phpMyAdmin ..."
     setup_phpmyadmin
-    echo "Loading phpMyAdmin conf ..."
-    if ! grep -q "^Include conf/httpd-phpmyadmin.conf" $HTTPD_CONF_FILE; then
-        echo 'Include conf/httpd-phpmyadmin.conf' >> $HTTPD_CONF_FILE
-    fi
-
-    
+fi        
 echo "Starting SSH ..."
 service ssh start
 
 echo "Starting php-fpm ..."
 service php7.0-fpm start
-
 chmod 777 /run/php/php7.0-fpm.sock
 
 echo "Starting Nginx ..."
+mkdir -p /home/LogFiles/nginx
+if test ! -e /home/LogFiles/nginx/error.log; then 
+    touch /home/LogFiles/nginx/error.log
+fi
 /usr/sbin/nginx
 
 
