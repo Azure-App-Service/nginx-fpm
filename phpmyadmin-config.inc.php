@@ -5,6 +5,7 @@ $i = 0;
 
 /* Server: localhost [1] */
 $i++;
+$cfg['PmaAbsoluteUri'] = 'localhost/phpmyadmin'
 
 /* http://stackoverflow.com/questions/1819592/error-when-connecting-to-mysql-using-php-pdo/1819767#1819767 */
 $cfg['Servers'][$i]['host'] = 'localhost';

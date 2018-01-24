@@ -8,11 +8,11 @@ setup_mariadb_data_dir(){
 
     # check if 'mysql' database exists
     if [ ! -d "$MARIADB_DATA_DIR/mysql" ]; then
-	echo "INFO: 'mysql' database doesn't exist under $MARIADB_DATA_DIR. So we think $MARIADB_DATA_DIR is empty."
-	echo "Copying all data files from the original folder /var/lib/mysql to $MARIADB_DATA_DIR ..."
-	cp -R /var/lib/mysql/. $MARIADB_DATA_DIR
+	    echo "INFO: 'mysql' database doesn't exist under $MARIADB_DATA_DIR. So we think $MARIADB_DATA_DIR is empty."
+	    echo "Copying all data files from the original folder /var/lib/mysql to $MARIADB_DATA_DIR ..."
+	    cp -R /var/lib/mysql/. $MARIADB_DATA_DIR
     else
-	echo "INFO: 'mysql' database already exists under $MARIADB_DATA_DIR."
+	    echo "INFO: 'mysql' database already exists under $MARIADB_DATA_DIR."
     fi
 
     rm -rf /var/lib/mysql
@@ -37,10 +37,11 @@ setup_phpmyadmin(){
     cd $PHPMYADMIN_SOURCE
     tar -xf phpMyAdmin.tar.gz -C $PHPMYADMIN_HOME --strip-components=1
     cp -R phpMyAdmin-config.inc.php $PHPMYADMIN_HOME/config.inc.php
+	cp -R phpmyadmin-nginx.conf /etc/nginx/nginx.conf
 	cd /
     rm -rf $PHPMYADMIN_SOURCE
 	if [ ! $WEBSITES_ENABLE_APP_SERVICE_STORAGE ]; then
-        echo "INFO: NOT in Azure, chown for "$HOME_SITE  
+        echo "INFO: NOT in Azure, chown for "$PHPMYADMIN_HOME  
         chown -R www-data:www-data $PHPMYADMIN_HOME
 	fi
 }
@@ -82,10 +83,8 @@ if [ "${DATABASE_TYPE}" == "local" ]; then
     # Set default value of username/password if they are't exist/null.
     DATABASE_USERNAME=${DATABASE_USERNAME:-phpmyadmin}
     DATABASE_PASSWORD=${DATABASE_PASSWORD:-MS173m_QN}
-    echo "phpmyadmin username:"
-    echo "$DATABASE_USERNAME"
-    echo "phpmyadmin password:"
-    echo "$DATABASE_PASSWORD"
+    echo "phpmyadmin username: "$DATABASE_USERNAME    
+    echo "phpmyadmin password: "$DATABASE_PASSWORD    
     mysql -u root -e "GRANT ALL ON *.* TO \`$DATABASE_USERNAME\`@'localhost' IDENTIFIED BY '$DATABASE_PASSWORD' WITH GRANT OPTION; FLUSH PRIVILEGES;"
     echo "Installing phpMyAdmin ..."
     setup_phpmyadmin

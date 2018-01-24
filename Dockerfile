@@ -30,7 +30,7 @@ ENV PHPMYADMIN_VERSION "4.7.5"
 ENV PHPMYADMIN_DOWNLOAD_URL "https://files.phpmyadmin.net/phpMyAdmin/$PHPMYADMIN_VERSION/phpMyAdmin-$PHPMYADMIN_VERSION-all-languages.tar.gz"
 ENV PHPMYADMIN_SHA256 "c62b4072b9dc2a858f51ddd95e731c4717eb2fba85e1e108564736b8c8de1a2b"
 ENV PHPMYADMIN_SOURCE "/usr/src/phpmyadmin"
-ENV PHPMYADMIN_HOME "/home/site/wwwroot/phpmyadmin"
+ENV PHPMYADMIN_HOME "/home/phpmyadmin"
 #Web Site Home
 ENV HOME_SITE "/home/site/wwwroot"
 
@@ -107,7 +107,8 @@ RUN set -ex \
 	# 6. phpmyadmin
 	# -------------
 	&& mkdir -p $PHPMYADMIN_SOURCE \
-    && mv /tmp/phpMyAdmin.tar.gz $PHPMYADMIN_SOURCE/phpMyAdmin.tar.gz
+    && mv /tmp/phpMyAdmin.tar.gz $PHPMYADMIN_SOURCE/phpMyAdmin.tar.gz \
+	&& mv /tmp/phpmyadmin-nginx.conf $PHPMYADMIN_SOURCE/phpmyadmin-nginx.conf
 	
 	# ----------
 	# ~. clean up
@@ -121,17 +122,19 @@ RUN set -ex \
 
 RUN set -ex\
     && test ! -d /var/www && mkdir -p /var/www \
-	&& chown -R www-data:www-data /var/www \
+	&& chown -R www-data:www-data /var/www \	
 	##
 	##
 	&& rm -rf /var/log/mysql \
 	&& ln -s $MARIADB_LOG_DIR /var/log/mysql \
-	#
+	##
 	&& rm -rf /var/log/nginx \
 	&& ln -s $NGINX_LOG_DIR /var/log/nginx \
-	#
-    && ln -s ${HOME_SITE} /var/www/wwwroot	
-
+	##
+    && ln -s ${HOME_SITE} /var/www/wwwroot \
+    ##	
+    && ln -s ${PHPMYADMIN_HOME} /var/www/phpmyadmin
+	
 # ssh
 COPY sshd_config /etc/ssh/
  
