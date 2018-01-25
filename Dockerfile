@@ -26,9 +26,6 @@ ENV PHP_CONF_FILE $PHP_CONF_DIR"/php.ini"
 ENV MARIADB_DATA_DIR "/home/data/mysql"
 ENV MARIADB_LOG_DIR "/home/LogFiles/mysql"
 # phpmyadmin
-ENV PHPMYADMIN_VERSION "4.7.5"
-ENV PHPMYADMIN_DOWNLOAD_URL "https://files.phpmyadmin.net/phpMyAdmin/$PHPMYADMIN_VERSION/phpMyAdmin-$PHPMYADMIN_VERSION-all-languages.tar.gz"
-ENV PHPMYADMIN_SHA256 "c62b4072b9dc2a858f51ddd95e731c4717eb2fba85e1e108564736b8c8de1a2b"
 ENV PHPMYADMIN_SOURCE "/usr/src/phpmyadmin"
 ENV PHPMYADMIN_HOME "/home/phpmyadmin"
 #Web Site Home
@@ -71,6 +68,7 @@ RUN set -ex \
         php7.0-gd \
         php7.0-dba \
         php7.0-mysql \
+		php7.0-xml \
 	" \
     && apt-get update \
 	&& apt-get install -y -V --no-install-recommends $phps \
